@@ -1,7 +1,7 @@
 """
 Program: To-Do List
 Author: Morgan Hutton
-Last Updated: April 30, 2025 (version 0.2)
+Last Updated: May 6, 2025 (version 0.2.1)
 Purpose: Allows the user to record to-do list items, mark as completed, or remove from the list.
 Change Log:
     version 0.1:
@@ -12,6 +12,8 @@ Change Log:
         created a new variable that counts the number of items in the total list
         created button functionality for adding and removing items from the list
         removed column4 header ("delete")
+    version 0.2.1:
+        fixed a bug with the delete button
 """
 
 # IMPORT
@@ -79,20 +81,25 @@ buttonFrame = tk.Frame( # establishes the frame
 buttonFrame.pack(fill = "x", side = "bottom")
 
 # BUTTON FUNCTION DEFINITIONS
-def deleteTask(rowNumber):
+def deleteTask(buttonWidget):
     global tasksInList # will be updated in the function
+    deletingRow = buttonWidget.grid_info()["row"] # ensures the button deletes only its own row
+    deletingWidgets = [] # temporarily stores the items to be deleted
     
-    for widget in listFrame.winfo_children(): #examines each item in the list (checkboxes, text, buttons)
+    for widget in listFrame.winfo_children(): # checks to see if an item is valid for deleting
         examine = widget.grid_info()
-        if examine["row"] == rowNumber: # if the item is on the same row as the Delete button...
-            widget.destroy() # ... that item is destroyed
+        if examine["row"] == deletingRow: # if the item is on the same row as the delete button
+            deletingWidgets.append(widget) # it is added to the list of items to be deleted
     
-    for widget in listFrame.winfo_children(): # now we need to move the remaining items in the list
+    for widget in deletingWidgets:
+        widget.destroy() # deletes the items
+    
+    for widget in listFrame.winfo_children(): # repositions remaining items
         examine = widget.grid_info()
-        if examine["row"] > rowNumber: # if there is a gap in the row numbers...
-            widget.grid_configure(row = examine["row"] - 1) # the next row is moved down to remove the gap
+        if examine["row"] > deletingRow: # if the row was below the deleted one
+            widget.grid_configure(row = examine["row"] - 1) # it's moved up to remove blank space
     
-    tasksInList -= 1 # reduces the count of rows in the list
+    tasksInList -= 1
 
 def taskAddition(newTask, newDeadline, closeWindow):
     global tasksInList
@@ -135,7 +142,7 @@ def taskAddition(newTask, newDeadline, closeWindow):
         bg = "#00A2E8",
         fg = "#FFFFFF",
         activeforeground = "#00A2E8",
-        command = lambda rowNumber = tasksInList: deleteTask(rowNumber)
+        command = lambda: deleteTask(newListDelete)
     )
     newListDelete.grid(row = tasksInList, column = 4, padx = 5, sticky = "e")
 
